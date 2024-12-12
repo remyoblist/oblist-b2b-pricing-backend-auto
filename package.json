@@ -5,10 +5,13 @@
   "author": "Actifai Engineering",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "nodemon server.js"
   },
   "dependencies": {
     "express": "4.16.1",
-    "pg": "8.7.1"
+    "nodemon": "^3.1.7",
+    "pg": "^8.7.1",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.5"
   }
 }
