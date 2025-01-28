@@ -2,3 +2,5 @@
 node_modules/
 postgres-data/
 .DS_Store
+.env
+production.env

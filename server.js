@@ -2,23 +2,29 @@
 
 const express = require("express");
 
-const userRoutes = require("./routes/users");
-const groupRoutes = require("./routes/groups");
-const saleRoutes = require("./routes/sales");
-const userGroupRoutes = require("./routes/userGroups");
+const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
-const seeder = require("./seed");
+dotenv.config();
+
+const pricingRuleRoutes = require('./routes/pricingrule.routes')
+const shopifyRoutes = require('./routes/shopify.routes')
 
 // Constants
 const PORT = 3000;
 const HOST = "0.0.0.0";
 
 async function start() {
-  // Seed the database
-  await seeder.seedDatabase();
-
   // App
   const app = express();
+
+  app.use(cors());
+  app.use(express.json());
+  app.use(cookieParser());
+
+  // Parse incoming URL-encoded requests (if necessary)
+  app.use(express.urlencoded({ extended: true }));
 
   // Health check
   app.get("/health", (req, res) => {
@@ -28,10 +34,8 @@ async function start() {
   // Write your endpoints here
 
   // Register routes
-  app.use("/api/users", userRoutes); // User routes
-  app.use("/api/groups", groupRoutes); // Group routes
-  app.use("/api/sales", saleRoutes); // Sales routes
-  app.use("/api/userGroups", userGroupRoutes); // User-Group routes
+  app.use("/api/pricing_rule", pricingRuleRoutes); // User routes
+  // app.use("/api/shopify", shopifyRoutes);
 
   app.listen(PORT, HOST);
   console.log(`Server is running on http://${HOST}:${PORT}`);
