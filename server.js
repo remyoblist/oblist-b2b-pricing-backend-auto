@@ -9,7 +9,9 @@ const cors = require('cors');
 dotenv.config();
 
 const pricingRuleRoutes = require('./routes/pricingrule.routes')
-const shopifyRoutes = require('./routes/shopify.routes')
+const prouctRoutes = require('./routes/product.routes')
+const shopifyRoutes = require('./routes/shopify.routes');
+const { getAllProductTypes } = require("./controllers/product.shopify.controller");
 
 // Constants
 const PORT = 3000;
@@ -35,6 +37,7 @@ async function start() {
 
   // Register routes
   app.use("/api/pricing_rule", pricingRuleRoutes); // User routes
+  app.get("/api/product_types", getAllProductTypes); // User routes
   // app.use("/api/shopify", shopifyRoutes);
 
   app.listen(PORT, HOST);

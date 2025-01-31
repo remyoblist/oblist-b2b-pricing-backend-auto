@@ -2,6 +2,7 @@ const PricingRule = require("../models/pricingrule");
 const {
   createPriceList,
   updatePriceList,
+  updatePriceListPrices,
 } = require("./pricelist.shopify.controller");
 const {
   createPublication,
@@ -9,12 +10,17 @@ const {
   removePublication,
 } = require("./publication.shopify.controller");
 
-const { GetProducts } = require("./product.shopify.controller");
+const {
+  GetProducts,
+  GetVariants,
+  GetCalculatePrices4PriceList,
+} = require("./product.shopify.controller");
 const {
   createCatalog,
   updateCatalog,
   removeCatalog,
 } = require("./catalog.shopify.controller");
+const { TESTER_PRICE_LIST_ID } = require("../config/shopify");
 
 // CREATE a new pricing rule
 const create = async (req, res) => {
@@ -34,58 +40,36 @@ const create = async (req, res) => {
 
     // Create Pricelist first
 
-    const new_pricielist = await createPriceList(
-      `Pricing-${category}-${title}-${pricing_rule.type}-${pricing_rule.percentage}%-${currency}`,
-      currency,
-      pricing_rule.percentage,
-      pricing_rule.type
-    );
-    console.log("************************** priceListId:", new_pricielist.id);
+    try {
+      const variants = await GetVariants({
+        productType: product,
+        category,
+        collectionName: collection,
+        Vendor: vendor,
+      });
+      const calculatePrices = GetCalculatePrices4PriceList(
+        variants,
+        pricing_rule.type,
+        pricing_rule.percentage
+      );
+      await updatePriceListPrices(
+        TESTER_PRICE_LIST_ID,
+        calculatePrices
+      );
 
-    // Create publication
-
-    const new_publication = await createPublication();
-    console.log(
-      "************************** publicationId: ",
-      new_publication.id
-    );
-
-    const productIds = await GetProducts({
-      category: category,
-      productType: product,
-      collectionName: collection,
-      Vendor: vendor,
-    });
-    await updatePublication(new_publication.id, productIds);
-
-    // Create Catalog
-
-    const new_catalog = await createCatalog(
-      title,
-      new_pricielist.id,
-      new_publication.id
-    );
-    console.log("************************** catalogId:", new_catalog.id);
-
-    if (typeof pricing_rule != "object") {
-      return res.status(400).json({ message: "Pricing Rule should be Object" });
+      const newPricingRule = new PricingRule({
+        title: `${category}-${product}${vendor}${collection}`,
+        vendor,
+        pricing_rule,
+        category,
+        product,
+        collection,
+      });
+      const savedPricingRule = await newPricingRule.save();
+      res.status(201).json(savedPricingRule);
+    } catch (error) {
+      console.error("An error occurred:", error);
     }
-
-    const newPricingRule = new PricingRule({
-      title,
-      catalogId: new_catalog.id,
-      price_listId: new_pricielist.id,
-      publicationId: new_publication.id,
-      vendor,
-      pricing_rule,
-      category,
-      product,
-      collection,
-      currency
-    });
-
-    const savedPricingRule = await newPricingRule.save();
-    res.status(201).json(savedPricingRule);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -134,13 +118,11 @@ const updateOne = async (req, res) => {
     const updatedPricingRule = await PricingRule.findByIdAndUpdate(
       id,
       {
-        title,
         vendor,
         pricing_rule,
         category,
         product,
         collection,
-        currency,
       },
       { new: true }
     );
@@ -149,47 +131,38 @@ const updateOne = async (req, res) => {
       return res.status(404).json({ message: "PricingRule not found" });
     }
 
-    const catalogId = originPricingRule.catalogId;
-    const price_listId = originPricingRule.price_listId;
-    const publicationId = originPricingRule.publicationId;
+    const origin_variants = await GetVariants({
+      productType: originPricingRule.product,
+      category: originPricingRule.category,
+      collectionName: originPricingRule.collection,
+      Vendor: originPricingRule.vendor,
+    });
+    const origin_calculatePrices = GetCalculatePrices4PriceList(
+      origin_variants,
+      pricing_rule.type,
+      pricing_rule.percentage
+    );
+    await updatePriceListPrices(
+      TESTER_PRICE_LIST_ID,
+      origin_calculatePrices,
+      true
+    );
 
-    let new_publication_id = undefined;
-    if (
-      originPricingRule.category != updatedPricingRule.category ||
-      originPricingRule.vendor != updatedPricingRule.vendor ||
-      originPricingRule.product != updatedPricingRule.product ||
-      originPricingRule.collection != updatedPricingRule.collection
-    ) {
-      // needs publication update
-      try {
-        await removePublication(publicationId);
-      } catch (e) {
-        console.log(`Skipping remove publication error`);
-      }
-      const new_publication = await createPublication();
-      const productIds = await GetProducts({
-        category: category,
-        productType: product,
-        collectionName: collection,
-        Vendor: vendor,
-      });
-      await updatePublication(new_publication.id, productIds);
-      new_publication_id = new_publication.id;
-    }
-    if (
-      updatedPricingRule.pricing_rule.type !=
-        originPricingRule.pricing_rule.type ||
-      updatedPricingRule.pricing_rule.percentage !=
-        originPricingRule.pricing_rule.percentage
-    ) {
-      // needs publication update
-      await updatePriceList(
-        price_listId,
-        pricing_rule.percentage,
-        pricing_rule.type
-      );
-    }
-    updateCatalog(catalogId, {title, publicationId: new_publication_id ? new_publication_id: originPricingRule.publicationId });
+    const variants = await GetVariants({
+      productType: product,
+      category,
+      collectionName: collection,
+      Vendor: vendor,
+    });
+    const calculatePrices = GetCalculatePrices4PriceList(
+      variants,
+      pricing_rule.type,
+      pricing_rule.percentage
+    );
+    await updatePriceListPrices(
+      TESTER_PRICE_LIST_ID,
+      calculatePrices
+    );
 
     res.status(200).json(updatedPricingRule);
   } catch (error) {
@@ -203,9 +176,23 @@ const deleteOne = async (req, res) => {
     const { id } = req.params;
     const deletedPricingRule = await PricingRule.findByIdAndDelete(id);
 
-    const catalogId = deletedPricingRule.catalogId;
+    const origin_variants = await GetVariants({
+      productType: deletedPricingRule.product,
+      category: deletedPricingRule.category,
+      collectionName: deletedPricingRule.collection,
+      Vendor: deletedPricingRule.vendor,
+    });
+    const origin_calculatePrices = GetCalculatePrices4PriceList(
+      origin_variants,
+      deletedPricingRule.pricing_rule.type,
+      deletedPricingRule.pricing_rule.percentage
+    );
+    await updatePriceListPrices(
+      TESTER_PRICE_LIST_ID,
+      origin_calculatePrices,
+      true
+    );
 
-    removeCatalog(catalogId);
     if (!deletedPricingRule) {
       return res.status(404).json({ message: "PricingRule not found" });
     }

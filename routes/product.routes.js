@@ -1,8 +1,8 @@
 const express = require('express');
-const { getProducts } = require('../controllers/product.controller');
+const { getAllProductTypes } = require('../controllers/product.shopify.controller');
 
 const router = express.Router();
 
-router.get('/', getProducts);
+router.get('/types', getAllProductTypes);
 
 module.exports = router;

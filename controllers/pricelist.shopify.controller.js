@@ -30,7 +30,7 @@ const createPriceList = async (name, currency, value, type) => {
         currency: currency,
         parent: {
           adjustment: {
-            type: `PERCENTAGE_${type.toUpperCase() || 'DECREASE'}`,
+            type: `PERCENTAGE_${type.toUpperCase() || "DECREASE"}`,
             value: value,
           },
         },
@@ -66,7 +66,130 @@ const createPriceList = async (name, currency, value, type) => {
   }
 };
 
+const CHUNK_SIZE = 250; // Shopify's limit for publishablesToAdd
 
+/**
+ * Split an array into chunks of a given size.
+ * @param {Array} array - The array to split.
+ * @param {number} size - The size of each chunk.
+ * @returns {Array[]} - An array of chunks.
+ */
+const chunkArray = (array, size) => {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+};
+/**
+ * Update a single chunk of products.
+ * @param {string} publicationId - The ID of the publication to update.
+ * @param {string[]} chunk - Array of product IDs for this chunk.
+ * @param {Function} shopifyGraphQL - Shopify GraphQL execution function.
+ * @returns {Promise<void>}
+ */
+const updatePriceListPricesChunk = async (
+  priceListId,
+  chunk,
+  removeFlag = false
+) => {
+  try {
+    const mutation = `
+      mutation priceListFixedPricesUpdate($priceListId: ID!, $pricesToAdd: [PriceListPriceInput!]!, $variantIdsToDelete: [ID!]!) {
+        priceListFixedPricesUpdate(priceListId: $priceListId, pricesToAdd: $pricesToAdd, variantIdsToDelete: $variantIdsToDelete) {
+          deletedFixedPriceVariantIds
+          priceList {
+            id
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`;
+    const pricesToAdd = chunk.map((v_price) => {
+      return {
+        price: {
+          amount: v_price.amount,
+          currencyCode: "EUR",
+        },
+        variantId: v_price.variantId,
+      };
+    });
+    const variantIdsToDelete = chunk.map((v_price) => {
+      return v_price.variantId;
+    });
+    console.log(pricesToAdd);
+    // Input for the mutation
+    const queryVariables = removeFlag
+      ? {
+          priceListId,
+          pricesToAdd: [],
+          variantIdsToDelete,
+        }
+      : {
+          priceListId,
+          pricesToAdd,
+          variantIdsToDelete: [],
+        };
+    console.log("************** Processing Chunk: ", queryVariables);
+    // Execute the GraphQL mutation'
+    const response = await shopify.graphql(mutation, queryVariables);
+
+    // Handle response
+    if (
+      response.priceListFixedPricesUpdate.userErrors &&
+      response.priceListFixedPricesUpdate.userErrors.length > 0
+    ) {
+      console.error(
+        "PriceListprices  updating errors:",
+        response.priceListFixedPricesUpdate.userErrors
+      );
+      throw new Error("PriceList prices updating failed due to user errors.");
+    }
+
+    console.log(
+      "PriceList prices updated successfully:",
+      response.priceListFixedPricesUpdate.priceList
+    );
+
+    return response.priceListFixedPricesUpdate.priceList;
+  } catch (error) {
+    console.error("Error updating priceList prices:", error.message);
+    if (error.response) {
+      console.error("GraphQL Error Response:", error.response.body);
+    }
+    throw error;
+  }
+};
+
+const updatePriceListPrices = async (
+  priceListId,
+  prices,
+  removeFlag = false
+) => {
+  try {
+    const chunks = chunkArray(prices, CHUNK_SIZE);
+
+    // Process all chunks concurrently using Promise.all
+    await Promise.all(
+      chunks.map((chunk) =>
+        updatePriceListPricesChunk(priceListId, chunk, removeFlag)
+      )
+    );
+
+    console.log("All chunks processed concurrently.");
+  } catch (error) {
+    console.error("Error updating priceList prices:", error.message);
+    if (error.response) {
+      console.error(
+        "GraphQL Error Response:",
+        JSON.stringify(error.response.body, null, 2)
+      );
+    }
+    throw error;
+  }
+};
 const updatePriceList = async (priceListId, value, type) => {
   try {
     const mutation = `
@@ -174,4 +297,9 @@ const removePriceList = async (priceListId) => {
   }
 };
 
-module.exports = { createPriceList, updatePriceList, removePriceList };
+module.exports = {
+  createPriceList,
+  updatePriceList,
+  removePriceList,
+  updatePriceListPrices,
+};

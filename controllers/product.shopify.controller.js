@@ -1,11 +1,11 @@
 const {
-  shopify,
+  apiVersion,
   SHOPIFY_SHOP_NAME,
   SHOPIFY_ACCESS_TOKEN,
+  SHOPIFY_STOREFRONT_TOKEN,
 } = require("../config/shopify"); // Ensure shopify is properly initialized
 const fetch = require("node-fetch");
 
-const apiVersion = "2024-10";
 const fetchCollection = async (collectionName) => {
   const baseUrl = `https://${SHOPIFY_SHOP_NAME}/admin/api/${apiVersion}`;
   let collectionId = null;
@@ -139,8 +139,7 @@ const GetProducts = async ({
     console.log(productUrl);
     const productIds = await fetchAllProducts(productUrl, SHOPIFY_ACCESS_TOKEN)
       .then((products) => {
-        const ids = products.map((product) => product.admin_graphql_api_id);
-        return ids;
+        return products;
       })
       .catch((error) => {
         console.error("Error fetching products:", error);
@@ -156,8 +155,82 @@ const GetProducts = async ({
   }
 };
 
-// GetProducts({ productType: "Vase" });
+const GetVariants = async ({
+  category = "Product",
+  productType,
+  collectionName,
+  Vendor,
+}) => {
+  const products = await GetProducts({
+    category,
+    productType,
+    collectionName,
+    Vendor,
+  });
+  let variants = [];
+  products.forEach((product) => {
+    const product_variants = product?.variants;
+    for (let i = 0; i < product_variants.length; i++) {
+      variants.push(product_variants[i]);
+    }
+  });
+
+  return variants;
+};
+
+const GetCalculatePrices4PriceList = (variants, priceType, percentage) => {
+  const multier =
+    priceType.toLowerCase() == "decrease"
+      ? (100 - percentage) / 100.0
+      : (100 + percentage) / 100.0;
+  const calculatePrices = variants.map((variant) => {
+    return { amount: variant.price * multier, variantId: `gid://shopify/ProductVariant/${variant.id}` };
+  });
+
+  return calculatePrices;
+};
+
+const getAllProductTypes = async (req, res) => {
+  const endpoint = `https://${SHOPIFY_SHOP_NAME}/api/${apiVersion}/graphql.json`;
+  console.log(endpoint);
+  const query = `
+    {
+      productTypes(first: 100) {
+        edges {
+          node
+        }
+      }
+    }
+  `;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Storefront-Access-Token": SHOPIFY_STOREFRONT_TOKEN,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Extract product types
+    const productTypes = data.data.productTypes.edges.map((edge) => edge.node);
+    console.log(productTypes);
+    return res.status(200).json({ data: productTypes });
+  } catch (error) {
+    console.error("Error fetching product types:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// GetProducts({ productType: "Table Lamps" });
 // GetProducts({ category: "collection", collectionName: "Modern Lighting" });
 // GetProducts({ category: "Vendor", Vendor: "Less" });
+// getAllProductTypes();
 
-module.exports = { GetProducts };
+module.exports = { GetProducts, getAllProductTypes, GetVariants, GetCalculatePrices4PriceList };

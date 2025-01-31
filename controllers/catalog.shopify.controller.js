@@ -1,4 +1,4 @@
-const { shopify } = require("../config/shopify"); // Ensure shopify is properly initialized
+const { shopify, SHOPIFY_SHOP_NAME, apiVersion, SHOPIFY_STOREFRONT_TOKEN, SHOPIFY_ACCESS_TOKEN } = require("../config/shopify"); // Ensure shopify is properly initialized
 
 const createCatalog = async (
   catalogTitle,
