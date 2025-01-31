@@ -221,7 +221,7 @@ const getAllProductTypes = async (req, res) => {
     // Extract product types
     const productTypes = data.data.productTypes.edges.map((edge) => edge.node);
     console.log(productTypes);
-    return res.status(200).json({ data: productTypes });
+    return res.status(200).json(productTypes);
   } catch (error) {
     console.error("Error fetching product types:", error);
     return res.status(500).json({ message: "Internal Server Error" });
