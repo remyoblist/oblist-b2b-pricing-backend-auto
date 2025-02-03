@@ -184,7 +184,7 @@ const GetCalculatePrices4PriceList = (variants, priceType, percentage) => {
       ? (100 - percentage) / 100.0
       : (100 + percentage) / 100.0;
   const calculatePrices = variants.map((variant) => {
-    return { amount: variant.price * multier, variantId: `gid://shopify/ProductVariant/${variant.id}` };
+    return { compareAtPrice:variant.price, amount: variant.price * multier, variantId: `gid://shopify/ProductVariant/${variant.id}` };
   });
 
   return calculatePrices;

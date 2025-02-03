@@ -113,6 +113,10 @@ const updatePriceListPricesChunk = async (
           amount: v_price.amount,
           currencyCode: "EUR",
         },
+        compareAtPrice: {
+          amount: v_price.compareAtPrice,
+          currencyCode: "EUR",
+        },
         variantId: v_price.variantId,
       };
     });
