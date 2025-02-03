@@ -10,7 +10,7 @@ dotenv.config();
 
 const pricingRuleRoutes = require('./routes/pricingrule.routes')
 const authRoutes = require('./routes/auth.routes')
-const { getAllProductTypes } = require("./controllers/product.shopify.controller");
+const { getAllProductTypes, getAllProductTags } = require("./controllers/product.shopify.controller");
 const { authenticateToken } = require("./middlewares/auth.middleware");
 
 // Constants
@@ -39,6 +39,7 @@ async function start() {
   app.use(authRoutes); // User routes
   app.use("/api/pricing_rule", authenticateToken, pricingRuleRoutes); // User routes
   app.get("/api/product_types", getAllProductTypes); // User routes
+  app.get("/api/product_tags", getAllProductTags); // User routes
   // app.use("/api/shopify", shopifyRoutes);
 
   app.listen(PORT, HOST);

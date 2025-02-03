@@ -4,7 +4,7 @@ const Shopify = require("shopify-api-node");
 // Load environment variables from .env file
 dotenv.config();
 const apiVersion = "2024-10";
-const TESTER_PRICE_LIST_ID = "gid://shopify/PriceList/31287148809"
+const TESTER_PRICE_LIST_ID = "gid://shopify/PriceList/31292424457"
 
 // Fetch credentials from environment variables
 const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY;

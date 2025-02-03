@@ -7,6 +7,7 @@ const PricingRuleSchema = new mongoose.Schema({
     vendor: String,
     product: String, // (type or category text)
     collection: String, // collection name
+    product_tag: String, // collection name
 });
 const PricingRule = mongoose.model('PricingRule', PricingRuleSchema);
 

@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllProductTypes } = require('../controllers/product.shopify.controller');
+const { getAllProductTypes, getAllProductTags } = require('../controllers/product.shopify.controller');
 
 const router = express.Router();
 
