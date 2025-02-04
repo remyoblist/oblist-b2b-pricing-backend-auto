@@ -1,9 +1,6 @@
 const PricingRule = require("../models/pricingrule");
-const {
-  updatePriceListPrices,
-} = require("./pricelist.shopify.controller");
-const {
-} = require("./publication.shopify.controller");
+const { updatePriceListPrices } = require("./pricelist.shopify.controller");
+const {} = require("./publication.shopify.controller");
 
 const {
   GetVariants,
@@ -31,28 +28,36 @@ const create = async (req, res) => {
     // Create Pricelist first
 
     try {
-      const tag_rule_list = await PricingRule.find({category:"Tag"});
-      const tag_list = tag_rule_list.map(rule => rule.product_tag);
+      const tag_rule_list = await PricingRule.find({ category: "Tag" });
+      const tag_list = tag_rule_list.map((rule) => rule.product_tag);
       const variants = await GetVariants({
         productType: product,
         category,
         collectionName: collection,
         Vendor: vendor,
         tag: product_tag,
-        tag_list
+        tag_list,
       });
       const calculatePrices = GetCalculatePrices4PriceList(
         variants,
         pricing_rule.type,
         pricing_rule.percentage
       );
-      await updatePriceListPrices(
-        TESTER_PRICE_LIST_ID,
-        calculatePrices
-      );
+      await updatePriceListPrices(TESTER_PRICE_LIST_ID, calculatePrices);
 
       const newPricingRule = new PricingRule({
-        title: `${category}-${product}${vendor}${collection}${product_tag}`,
+        title: `${category}-${
+          category === "Product"
+            ? product
+            : category === "Vendor"
+            ? vendor
+            : category === "Collection"
+            ? collection
+            : category === "Tag"
+            ? product_tag
+            : ""
+        }`,
+
         vendor,
         pricing_rule,
         category,
@@ -107,10 +112,9 @@ const updateOne = async (req, res) => {
       collection,
       currency,
       product_tag,
-
     } = req.body;
-    const tag_rule_list = await PricingRule.find({category:"Tag"});
-    const tag_list = tag_rule_list.map(rule => rule.product_tag);
+    const tag_rule_list = await PricingRule.find({ category: "Tag" });
+    const tag_list = tag_rule_list.map((rule) => rule.product_tag);
 
     const originPricingRule = await PricingRule.findById(id);
 
@@ -163,10 +167,7 @@ const updateOne = async (req, res) => {
       pricing_rule.type,
       pricing_rule.percentage
     );
-    await updatePriceListPrices(
-      TESTER_PRICE_LIST_ID,
-      calculatePrices
-    );
+    await updatePriceListPrices(TESTER_PRICE_LIST_ID, calculatePrices);
 
     res.status(200).json(updatedPricingRule);
   } catch (error) {
@@ -178,8 +179,8 @@ const updateOne = async (req, res) => {
 const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
-    const tag_rule_list = await PricingRule.find({category:"Tag"});
-    const tag_list = tag_rule_list.map(rule => rule.product_tag);
+    const tag_rule_list = await PricingRule.find({ category: "Tag" });
+    const tag_list = tag_rule_list.map((rule) => rule.product_tag);
     let deletedPricingRule = await PricingRule.findById(id);
 
     const origin_variants = await GetVariants({
@@ -202,7 +203,6 @@ const deleteOne = async (req, res) => {
     );
 
     deletedPricingRule = await PricingRule.findByIdAndDelete(id);
-
 
     if (!deletedPricingRule) {
       return res.status(404).json({ message: "PricingRule not found" });

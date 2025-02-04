@@ -41,8 +41,6 @@ const createCatalog = async (
       },
     };
 
-    console.log(queryVariables);
-
     // Execute the GraphQL mutation'
     const response = await shopify.graphql(mutation, queryVariables);
 

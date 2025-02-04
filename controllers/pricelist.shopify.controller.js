@@ -123,7 +123,6 @@ const updatePriceListPricesChunk = async (
     const variantIdsToDelete = chunk.map((v_price) => {
       return v_price.variantId;
     });
-    console.log(pricesToAdd);
     // Input for the mutation
     const queryVariables = removeFlag
       ? {
