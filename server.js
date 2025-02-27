@@ -2,48 +2,49 @@
 
 const express = require("express");
 
-const dotenv = require('dotenv');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
+const dotenv = require("dotenv");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
 
 dotenv.config();
 
-const pricingRuleRoutes = require('./routes/pricingrule.routes')
-const authRoutes = require('./routes/auth.routes')
-const { getAllProductTypes, getAllProductTags } = require("./controllers/product.shopify.controller");
+const pricingRuleRoutes = require("./routes/pricingrule.routes");
+const authRoutes = require("./routes/auth.routes");
+const {
+  getAllProductTypes,
+  getAllProductTags,
+} = require("./controllers/product.shopify.controller");
 const { authenticateToken } = require("./middlewares/auth.middleware");
 
 // Constants
 const PORT = 3000;
 const HOST = "0.0.0.0";
 
-async function start() {
-  // App
-  const app = express();
+// App
+const app = express();
 
-  app.use(cors());
-  app.use(express.json());
-  app.use(cookieParser());
+app.use(cors());
+app.use(express.json());
+app.use(cookieParser());
 
-  // Parse incoming URL-encoded requests (if necessary)
-  app.use(express.urlencoded({ extended: true }));
+// Parse incoming URL-encoded requests (if necessary)
+app.use(express.urlencoded({ extended: true }));
 
-  // Health check
-  app.get("/health", (req, res) => {
-    res.send("Hello World");
-  });
+// Health check
+app.get("/health", (req, res) => {
+  res.send("Hello World");
+});
 
-  // Write your endpoints here
+// Write your endpoints here
 
-  // Register routes
-  app.use(authRoutes); // User routes
-  app.use("/api/pricing_rule", authenticateToken, pricingRuleRoutes); // User routes
-  app.get("/api/product_types", getAllProductTypes); // User routes
-  app.get("/api/product_tags", getAllProductTags); // User routes
-  // app.use("/api/shopify", shopifyRoutes);
+// Register routes
+app.use(authRoutes); // User routes
+app.use("/api/pricing_rule", authenticateToken, pricingRuleRoutes); // User routes
+app.get("/api/product_types", getAllProductTypes); // User routes
+app.get("/api/product_tags", getAllProductTags); // User routes
+// app.use("/api/shopify", shopifyRoutes);
 
-  app.listen(PORT, HOST);
-  console.log(`Server is running on http://${HOST}:${PORT}`);
-}
+app.listen(PORT, HOST);
+console.log(`Server is running on http://${HOST}:${PORT}`);
 
-start();
+module.exports = app;
