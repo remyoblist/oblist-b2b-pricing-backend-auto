@@ -41,7 +41,7 @@ app.get("/health", (req, res) => {
 // Register routes
 app.use(authRoutes); // User routes
 app.use("/api/pricing_rule", authenticateToken, pricingRuleRoutes); // User routes
-app.get("/api/product", productRoutes); // User routes
+app.use("/api/product", productRoutes); // User routes
 app.get("/api/product_tags", getAllProductTags); // User routes
 // app.use("/api/shopify", shopifyRoutes);
 
