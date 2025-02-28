@@ -320,6 +320,7 @@ const getProductDiscount = async (req, res) => {
             }
             variant {
               id
+              price
             }
           }
         }
@@ -353,7 +354,7 @@ const getProductDiscount = async (req, res) => {
     console.log(data);
 
     // Extract product types
-    const prices = data.priceList.prices.nodes.map((node) => ({price: node?.price.amount, variantId: node?.variant?.id}));
+    const prices = data.priceList.prices.nodes.map((node) => ({price: node?.price.amount, variantId: node?.variant?.id, compare_at_price: node?.variant?.price}));
     return res.status(200).json(prices);
   } catch (error) {
     console.error("Error fetching product types:", error);
