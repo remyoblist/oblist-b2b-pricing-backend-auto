@@ -9,6 +9,7 @@ const cors = require("cors");
 dotenv.config();
 
 const pricingRuleRoutes = require("./routes/pricingrule.routes");
+const productRoutes = require("./routes/product.routes");
 const authRoutes = require("./routes/auth.routes");
 const {
   getAllProductTypes,
@@ -40,7 +41,7 @@ app.get("/health", (req, res) => {
 // Register routes
 app.use(authRoutes); // User routes
 app.use("/api/pricing_rule", authenticateToken, pricingRuleRoutes); // User routes
-app.get("/api/product_types", getAllProductTypes); // User routes
+app.get("/api/product", productRoutes); // User routes
 app.get("/api/product_tags", getAllProductTags); // User routes
 // app.use("/api/shopify", shopifyRoutes);
 

@@ -1,4 +1,4 @@
-const { shopify } = require("../config/shopify"); // Ensure shopify is properly initialized
+const { shopify, TESTER_PRICE_LIST_ID, SHOPIFY_SHOP_NAME, apiVersion, SHOPIFY_STOREFRONT_TOKEN } = require("../config/shopify"); // Ensure shopify is properly initialized
 
 const createPriceList = async (name, currency, value, type) => {
   try {
@@ -300,9 +300,71 @@ const removePriceList = async (priceListId) => {
   }
 };
 
+const getProductDiscount = async (req, res) => {
+
+  const { id } = req.params;
+  console.log(id);
+  const endpoint = `https://${SHOPIFY_SHOP_NAME}/api/2025-01/graphql.json`;
+  const query = `
+    query {
+      priceList(id: "${TESTER_PRICE_LIST_ID}") {
+        catalog {
+          id
+          title
+        }
+        prices(first: 5, query: "product_id:${id}") {
+          nodes {
+            price {
+              amount
+              currencyCode
+            }
+            variant {
+              id
+            }
+          }
+        }
+        currency
+        parent {
+          adjustment {
+            type
+            value
+          }
+        }
+      }
+    }`;
+  try {
+    // const response = await fetch(endpoint, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "X-Shopify-Storefront-Access-Token": SHOPIFY_STOREFRONT_TOKEN,
+    //   },
+    //   body: JSON.stringify({ query }),
+    // });
+
+    // if (!response.ok) {
+    //   throw new Error(`Failed to fetch data: ${response.statusText}`);
+    // }
+
+    const response = await shopify.graphql(query);
+
+    const data = response;
+    
+    console.log(data);
+
+    // Extract product types
+    const prices = data.priceList.prices.nodes.map((node) => ({price: node?.price.amount, variantId: node?.variant?.id}));
+    return res.status(200).json(prices);
+  } catch (error) {
+    console.error("Error fetching product types:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   createPriceList,
   updatePriceList,
   removePriceList,
   updatePriceListPrices,
+  getProductDiscount,
 };

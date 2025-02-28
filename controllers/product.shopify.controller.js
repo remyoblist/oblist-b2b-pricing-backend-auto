@@ -272,7 +272,7 @@ const GetVariants = async ({
   });
   let no_tag_products;
   let variants = [];
-  
+
   if (category.toLowerCase() === "tag") {
     no_tag_products = products; // or handle appropriately if 'tag' category should result in an empty list
   } else {
