@@ -4,3 +4,4 @@ postgres-data/
 .DS_Store
 .env
 production.env
+.vercel
