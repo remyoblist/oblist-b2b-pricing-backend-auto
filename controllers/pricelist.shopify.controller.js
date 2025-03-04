@@ -312,7 +312,7 @@ const getProductDiscount = async (req, res) => {
           id
           title
         }
-        prices(first: 5, query: "product_id:${id}") {
+        prices(first: 50, query: "product_id:${id}") {
           nodes {
             price {
               amount
