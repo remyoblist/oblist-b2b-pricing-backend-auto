@@ -120,9 +120,56 @@ const updatePriceListPricesChunk = async (
         variantId: v_price.variantId,
       };
     });
-    const variantIdsToDelete = chunk.map((v_price) => {
-      return v_price.variantId;
-    });
+
+    const existingFixedPricesQuery = `
+      query getPriceListFixedPrices($priceListId: ID!, $cursor: String) {
+        priceList(id: $priceListId) {
+          prices(first: 250, after: $cursor) {
+            nodes {
+              originType
+              variant {
+                id
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      }
+    `;
+    
+    async function fetchAllFixedPrices(shopify, priceListId) {
+      let allPrices = [];
+      let cursor = null;
+      let hasNextPage = true;
+    
+      while (hasNextPage) {
+        const variables = { priceListId, cursor };
+        const response = await shopify.graphql(existingFixedPricesQuery, variables);
+    
+        if (response?.priceList?.prices?.nodes) {
+          allPrices.push(...response.priceList.prices.nodes);
+        }
+    
+        // Get pagination info
+        hasNextPage = response?.priceList?.prices?.pageInfo?.hasNextPage;
+        cursor = response?.priceList?.prices?.pageInfo?.endCursor;
+      }
+    
+      return allPrices;
+    }
+    
+    // Usage:
+    let existingFixedPricesArray = await fetchAllFixedPrices(shopify, priceListId);
+    existingFixedPricesArray = existingFixedPricesArray.filter(p => p.originType == 'FIXED');
+    const existingFixedPriceVariantIds = new Set(existingFixedPricesArray.map(p => p.variant?.id));
+
+    // Filter variant IDs that have fixed prices
+    const variantIdsToDelete = chunk
+    .map(v_price => v_price.variantId)
+    .filter(variantId => existingFixedPriceVariantIds.has(variantId));
     // Input for the mutation
     const queryVariables = removeFlag
       ? {
