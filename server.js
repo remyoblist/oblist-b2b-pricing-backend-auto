@@ -24,11 +24,7 @@ const HOST = "0.0.0.0";
 // App
 const app = express();
 
-app.use(cors({
-  origin: 'https://oblist-b2b-pricing-frontend.vercel.app', // Allow only this origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed methods
-  allowedHeaders: ['Content-Type', 'Authorization'] // Specify allowed headers
-}));
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
