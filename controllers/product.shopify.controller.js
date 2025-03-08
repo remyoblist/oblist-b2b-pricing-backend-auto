@@ -379,7 +379,6 @@ const getAllProductTags = async (req, res) => {
   }
 };
 
-// GetProducts({ productType: "Table Lamps" });
 // GetProducts({ category: "collection", collectionName: "Modern Lighting" });
 // GetProducts({ category: "Vendor", Vendor: "Less" });
 // getAllProductTypes();

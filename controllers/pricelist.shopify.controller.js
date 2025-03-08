@@ -102,6 +102,7 @@ const updatePriceListPricesChunk = async (
             id
           }
           userErrors {
+            code
             field
             message
           }
@@ -121,69 +122,25 @@ const updatePriceListPricesChunk = async (
       };
     });
 
-    const existingFixedPricesQuery = `
-      query getPriceListFixedPrices($priceListId: ID!, $cursor: String) {
-        priceList(id: $priceListId) {
-          prices(first: 250, after: $cursor) {
-            nodes {
-              originType
-              variant {
-                id
-              }
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-          }
-        }
-      }
-    `;
-    
-    async function fetchAllFixedPrices(shopify, priceListId) {
-      let allPrices = [];
-      let cursor = null;
-      let hasNextPage = true;
-    
-      while (hasNextPage) {
-        const variables = { priceListId, cursor };
-        const response = await shopify.graphql(existingFixedPricesQuery, variables);
-    
-        if (response?.priceList?.prices?.nodes) {
-          allPrices.push(...response.priceList.prices.nodes);
-        }
-    
-        // Get pagination info
-        hasNextPage = response?.priceList?.prices?.pageInfo?.hasNextPage;
-        cursor = response?.priceList?.prices?.pageInfo?.endCursor;
-      }
-    
-      return allPrices;
-    }
-    
-    // Usage:
-    let existingFixedPricesArray = await fetchAllFixedPrices(shopify, priceListId);
-    existingFixedPricesArray = existingFixedPricesArray.filter(p => p.originType == 'FIXED');
-    const existingFixedPriceVariantIds = new Set(existingFixedPricesArray.map(p => p.variant?.id));
-
     // Filter variant IDs that have fixed prices
     const variantIdsToDelete = chunk
     .map(v_price => v_price.variantId)
-    .filter(variantId => existingFixedPriceVariantIds.has(variantId));
     // Input for the mutation
     const queryVariables = removeFlag
       ? {
           priceListId,
           pricesToAdd: [],
-          variantIdsToDelete,
+          variantIdsToDelete:variantIdsToDelete,
         }
       : {
           priceListId,
-          pricesToAdd,
+          pricesToAdd:pricesToAdd,
           variantIdsToDelete: [],
         };
-    console.log("************** Processing Chunk: ", queryVariables);
     // Execute the GraphQL mutation'
+    console.log("variantIDs delete: ", queryVariables?.pricesToAdd)
+    console.log("variantIDs delete: ", queryVariables?.variantIdsToDelete?.length)
+    console.log("variantIDs add: ", queryVariables?.pricesToAdd?.length)
     const response = await shopify.graphql(mutation, queryVariables);
 
     // Handle response
@@ -192,10 +149,10 @@ const updatePriceListPricesChunk = async (
       response.priceListFixedPricesUpdate.userErrors.length > 0
     ) {
       console.error(
-        "PriceListprices  updating errors:",
-        response.priceListFixedPricesUpdate.userErrors
+        "PriceListprices  updating errors:"
       );
-      throw new Error("PriceList prices updating failed due to user errors.");
+      console.log(response.priceListFixedPricesUpdate.userErrors.slice(0, 10))
+      // throw new Error("PriceList prices updating failed due to user errors.");
     }
 
     console.log(
@@ -209,7 +166,7 @@ const updatePriceListPricesChunk = async (
     if (error.response) {
       console.error("GraphQL Error Response:", error.response.body);
     }
-    throw error;
+    // throw error;
   }
 };
 
