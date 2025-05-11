@@ -101,7 +101,7 @@ const fetchAllProducts = async (basicUrl, accessToken, limit = 250) => {
 const fetchAllProductsByTag = async (tag) => {
   const query = `
     query ($cursor: String) {
-      products(query: "tag:Vintage", first: 250, after: $cursor) {
+      products(query: "tag:${tag}", first: 250, after: $cursor) {
         edges {
           cursor
           node {

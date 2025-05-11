@@ -9,6 +9,7 @@ const cors = require("cors");
 dotenv.config();
 
 const pricingRuleRoutes = require("./routes/pricingrule.routes");
+const excludeRuleRoutes = require("./routes/excluderule.routes");
 const productRoutes = require("./routes/product.routes");
 const authRoutes = require("./routes/auth.routes");
 const {
@@ -16,6 +17,7 @@ const {
   getAllProductTags,
 } = require("./controllers/product.shopify.controller");
 const { authenticateToken } = require("./middlewares/auth.middleware");
+const { applyAllExcludedRules } = require("./controllers/excluderule.controller");
 
 // Constants
 const PORT = 3000;
@@ -41,8 +43,10 @@ app.get("/health", (req, res) => {
 // Register routes
 app.use(authRoutes); // User routes
 app.use("/api/pricing_rule", authenticateToken, pricingRuleRoutes); // User routes
+app.use("/api/exclude_rule", authenticateToken, excludeRuleRoutes); // User routes
 app.use("/api/product", productRoutes); // User routes
 app.get("/api/product_types", getAllProductTypes); // User routes
+app.get("/api/exclude_rules", applyAllExcludedRules); // User routes
 app.get("/api/product_tags", getAllProductTags); // User routes
 // app.use("/api/shopify", shopifyRoutes);
 

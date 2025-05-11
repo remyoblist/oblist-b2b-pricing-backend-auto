@@ -1,5 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const { generateToken } = require("../config/tokenUtils");
 const { authenticateToken } = require("../middlewares/auth.middleware")
 
