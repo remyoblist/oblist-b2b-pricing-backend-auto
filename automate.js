@@ -4,7 +4,7 @@ const env = require('dotenv');
 env.config();
 
 let authToken = '';
-const BASIC_URL = 'https://oblist-b2b-pricing-backend.onrender.com/api'
+const BASIC_URL = 'https://oblist-b2b-pricing-backend.vercel.app/api'
 
 const authenticate = async () => {
     const email = process.env.EMAIL;
@@ -50,12 +50,10 @@ const get_all_pricing_rule = async () => {
 
 
 const apply_all_exclude_rule = async () => {
-
-  const token = getToken();
   const url = (`${BASIC_URL}/exclude_rules`);
   const response = await axios.get(url, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${authToken}`,
     },
   });
   return response.data;
