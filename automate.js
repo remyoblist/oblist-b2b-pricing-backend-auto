@@ -4,7 +4,7 @@ const env = require('dotenv');
 env.config();
 
 let authToken = '';
-const BASIC_URL = 'https://oblist-b2b-pricing-backend.vercel.app/api'
+const BASIC_URL = 'https://oblist-b2b-pricing-backend.onrender.com/api'
 
 const authenticate = async () => {
     const email = process.env.EMAIL;
