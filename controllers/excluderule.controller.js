@@ -136,14 +136,12 @@ const applyAllExcludedRules = async (req, res) => {
   }
 }
 const applyExcludedRule = async (ExcludeRule) => {
-  let tag_list = [];
   const origin_variants = await GetVariants({
     productType: ExcludeRule.product,
     category: ExcludeRule.category,
     collectionName: ExcludeRule.collection,
     Vendor: ExcludeRule.vendor,
     tag: ExcludeRule.product_tag,
-    tag_list,
   });
   const origin_calculatePrices = GetCalculatePrices4PriceList(
     origin_variants,

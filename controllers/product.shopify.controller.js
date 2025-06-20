@@ -261,7 +261,6 @@ const GetVariants = async ({
   collectionName,
   Vendor,
   tag,
-  tag_list,
 }) => {
   const products = await GetProducts({
     category,
@@ -273,14 +272,14 @@ const GetVariants = async ({
   let no_tag_products;
   let variants = [];
 
-  if (category.toLowerCase() === "tag") {
-    no_tag_products = products; // or handle appropriately if 'tag' category should result in an empty list
-  } else {
-    no_tag_products = products.filter((product) => {
-      return !tag_list.some((pre_tag) => product.tags.includes(pre_tag));
-    });
-  }
-  no_tag_products.forEach((product) => {
+  // if (category.toLowerCase() === "tag") {
+  //   no_tag_products = products; // or handle appropriately if 'tag' category should result in an empty list
+  // } else {
+  //   no_tag_products = products.filter((product) => {
+  //     return !tag_list.some((pre_tag) => product.tags.includes(pre_tag));
+  //   });
+  // }
+  products.forEach((product) => {
     const product_variants = product?.variants;
     for (let i = 0; i < product_variants.length; i++) {
       variants.push(product_variants[i]);

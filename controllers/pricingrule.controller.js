@@ -28,15 +28,12 @@ const create = async (req, res) => {
     // Create Pricelist first
 
     try {
-      const tag_rule_list = await PricingRule.find({ category: "Tag" });
-      const tag_list = tag_rule_list.map((rule) => rule.product_tag);
       const variants = await GetVariants({
         productType: product,
         category,
         collectionName: collection,
         Vendor: vendor,
         tag: product_tag,
-        tag_list,
       });
       const calculatePrices = GetCalculatePrices4PriceList(
         variants,
@@ -113,8 +110,6 @@ const updateOne = async (req, res) => {
       currency,
       product_tag,
     } = req.body;
-    const tag_rule_list = await PricingRule.find({ category: "Tag" });
-    const tag_list = tag_rule_list.map((rule) => rule.product_tag);
 
     const originPricingRule = await PricingRule.findById(id);
 
@@ -141,7 +136,6 @@ const updateOne = async (req, res) => {
       collectionName: originPricingRule.collection,
       Vendor: originPricingRule.vendor,
       tag: product_tag,
-      tag_list,
     });
     const origin_calculatePrices = GetCalculatePrices4PriceList(
       origin_variants,
@@ -160,7 +154,6 @@ const updateOne = async (req, res) => {
       collectionName: collection,
       Vendor: vendor,
       tag: product_tag,
-      tag_list,
     });
     const calculatePrices = GetCalculatePrices4PriceList(
       variants,
@@ -179,8 +172,6 @@ const updateOne = async (req, res) => {
 const deleteOne = async (req, res) => {
   try {
     const { id } = req.params;
-    const tag_rule_list = await PricingRule.find({ category: "Tag" });
-    const tag_list = tag_rule_list.map((rule) => rule.product_tag);
     let deletedPricingRule = await PricingRule.findById(id);
 
     const origin_variants = await GetVariants({
@@ -189,7 +180,6 @@ const deleteOne = async (req, res) => {
       collectionName: deletedPricingRule.collection,
       Vendor: deletedPricingRule.vendor,
       tag: deletedPricingRule.product_tag,
-      tag_list,
     });
     const origin_calculatePrices = GetCalculatePrices4PriceList(
       origin_variants,
