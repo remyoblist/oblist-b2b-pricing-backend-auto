@@ -58,6 +58,43 @@ const create = async (req, res) => {
   }
 };
 
+const create_or_not_b2b_exclude = async ( req, res ) => {
+  
+  try {
+    if (!req.body) {
+      return res.status(400).json({ message: "Bad Body" });
+    }
+    const {
+      vendor,
+      acceptB2b,
+    } = req.body;
+
+    // Create Pricelist first
+
+    if(acceptB2b === true || acceptB2b?.toLowerCase() === 'false' || acceptB2b?.toLowerCase() === 'no')
+      try {
+          const newExcludeRule = new ExcludeRule({
+          title: `vendor-${vendor}`,
+          vendor,
+          category : 'vendor',
+          product : '',
+          collection : '',
+          product_tag : '',
+        });
+        const savedExcludeRule = await newExcludeRule.save();
+
+        await applyExcludedRule(newExcludeRule);
+        res.status(201).json(savedExcludeRule);
+      } catch (error) {
+        console.error("An error occurred:", error);
+      }
+    else
+      res.status(300).json({msg: 'Not Excluded since the vendor accepts b2b'});
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+}
+
 // READ all pricing rules
 const getAll = async (req, res) => {
   try {
@@ -155,4 +192,4 @@ const applyExcludedRule = async (ExcludeRule) => {
   );
 }
 
-module.exports = { create, getAll, getOne, updateOne, deleteOne, applyAllExcludedRules };
+module.exports = { create, getAll, getOne, updateOne, deleteOne, applyAllExcludedRules, create_or_not_b2b_exclude };

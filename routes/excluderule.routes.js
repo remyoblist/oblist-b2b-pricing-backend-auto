@@ -8,6 +8,11 @@ const router = express.Router();
 router.post('/', excluderuleController.create);
 
 /**
+ * Create a new exclude-vendor rule based on yes/no
+ */
+router.post('/vendor', excluderuleController.create_or_not_b2b_exclude);
+
+/**
  * Get a specific pricingRule by ID
  */
 router.get('/:id', excluderuleController.getOne);
