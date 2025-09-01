@@ -58,38 +58,55 @@ const create = async (req, res) => {
   }
 };
 
-const create_or_not_b2b_exclude = async ( req, res ) => {
-  
+const create_or_not_b2b_exclude = async (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({ message: "Bad Body" });
     }
-    const {
-      vendor,
-      acceptB2b,
-    } = req.body;
+    const { vendor, acceptB2b } = req.body;
 
-    // Create Pricelist first
+    // Normalize acceptB2b to boolean
+    const acceptB2bNormalized =
+      acceptB2b === true ||
+      (typeof acceptB2b === "string" &&
+        ["true", "yes"].includes(acceptB2b.toLowerCase()));
 
-    if(acceptB2b === true || acceptB2b?.toLowerCase() === 'false' || acceptB2b?.toLowerCase() === 'no')
-      try {
-          const newExcludeRule = new ExcludeRule({
-          title: `vendor-${vendor}`,
-          vendor,
-          category : 'vendor',
-          product : '',
-          collection : '',
-          product_tag : '',
-        });
-        const savedExcludeRule = await newExcludeRule.save();
+    // Check if exclude rule exists for this vendor
+    const existingRule = await ExcludeRule.findOne({ vendor, category: 'vendor' });
 
-        await applyExcludedRule(newExcludeRule);
-        res.status(201).json(savedExcludeRule);
-      } catch (error) {
-        console.error("An error occurred:", error);
+    if (acceptB2bNormalized) {
+      // If rule exists and vendor now accepts B2B, remove the rule
+      if (existingRule) {
+        await ExcludeRule.deleteOne({ _id: existingRule._id });
+        return res.status(200).json({ msg: 'Removed from excluding rules list since the vendor accepts b2b' });
+      } else {
+        // No rule to remove, just respond
+        return res.status(200).json({ msg: 'Vendor accepts b2b, no exclusion rule present' });
       }
-    else
-      res.status(300).json({msg: 'Not Excluded since the vendor accepts b2b'});
+    } else {
+      // If vendor does not accept B2B, create rule if not exists
+      if (!existingRule) {
+        try {
+          const newExcludeRule = new ExcludeRule({
+            title: `vendor-${vendor}`,
+            vendor,
+            category: 'vendor',
+            product: '',
+            collection: '',
+            product_tag: '',
+          });
+          const savedExcludeRule = await newExcludeRule.save();
+          await applyExcludedRule(newExcludeRule);
+          return res.status(201).json(savedExcludeRule);
+        } catch (error) {
+          console.error("An error occurred:", error);
+          return res.status(500).json({ message: 'Error creating exclusion rule' });
+        }
+      } else {
+        // Rule already exists, just respond
+        return res.status(200).json(existingRule);
+      }
+    }
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -121,6 +138,8 @@ const getOne = async (req, res) => {
 
 // UPDATE a pricing rule by ID
 const updateOne = async (req, res) => {
+  const { id } = req.params;
+  const { vendor, category, product, collection, product_tag } = req.body;
   try {
     const updatedExcludeRule = await ExcludeRule.findByIdAndUpdate(
       id,
