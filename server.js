@@ -18,6 +18,7 @@ const {
 } = require("./controllers/product.shopify.controller");
 const { authenticateToken } = require("./middlewares/auth.middleware");
 const { applyAllExcludedRules } = require("./controllers/excluderule.controller");
+const { applyAllPricingRules } = require("./controllers/pricingrule.controller");
 
 // Constants
 const PORT = 3000;
@@ -47,6 +48,7 @@ app.use("/api/exclude_rule", authenticateToken, excludeRuleRoutes); // User rout
 app.use("/api/product", productRoutes); // User routes
 app.get("/api/product_types", getAllProductTypes); // User routes
 app.get("/api/exclude_rules", applyAllExcludedRules); // User routes
+app.get("/api/apply_p_rules", applyAllPricingRules); // User routes
 app.get("/api/product_tags", getAllProductTags); // User routes
 // app.use("/api/shopify", shopifyRoutes);
 

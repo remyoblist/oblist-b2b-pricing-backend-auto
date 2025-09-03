@@ -18,6 +18,11 @@ router.get('/:id', pricingruleController.getOne);
 router.get('/', pricingruleController.getAll);
 
 /**
+ * Get all pricingRule
+ */
+router.get('/', pricingruleController.applyAllPricingRules);
+
+/**
  * Update an existing pricingRule by ID
  */
 router.put('/:id', pricingruleController.updateOne);

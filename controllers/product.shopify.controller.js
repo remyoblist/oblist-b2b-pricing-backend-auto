@@ -236,7 +236,7 @@ const GetProducts = async ({
         "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
       },
     };
-    console.log(productUrl);
+    console.log(tag, category, productType, collectionName, Vendor);
     const productIds = await fetchAllProducts(productUrl, SHOPIFY_ACCESS_TOKEN)
       .then((products) => {
         return products;

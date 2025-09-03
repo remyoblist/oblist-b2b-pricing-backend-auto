@@ -59,28 +59,19 @@ const apply_all_exclude_rule = async () => {
   return response.data;
 }
 
+const apply_all_pricing_rule = async () => {
+  const url = (`${BASIC_URL}/apply_p_rules`);
+  const response = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  return response.data;
+}
+
 (async () => {
     await authenticate();
-    const arr_pricing_rule = await get_all_pricing_rule();
-    const vintageRule = null;
-    for (const rule of arr_pricing_rule) {
-        try {
-            if(rule.category == 'collection' && rule.product_tag == 'Vintage')
-              vintageRule = rule;
-            else {
-              const resp = await update_pricing_rule(rule._id, rule);
-              console.log(resp);
-            }
-        } catch (error) {
-            console.error(`Error updating rule ${rule._id}:`, error);
-        }
-    }
-
-    //Appies Vintage Discount on the top of any others
-    if(vintageRule) {
-      const resp = await update_pricing_rule(vintageRule?._id, vintageRule);
-      console.log(resp);
-    }
+    await apply_all_pricing_rule();
     await apply_all_exclude_rule();
     
     return;

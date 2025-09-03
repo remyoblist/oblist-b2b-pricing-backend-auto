@@ -183,9 +183,13 @@ const deleteOne = async (req, res) => {
 
 const applyAllExcludedRules = async (req, res) => {
   try {
-    const ExcludeRules = await ExcludeRule.find();
-    for(rule in ExcludeRules)
-      await applyExcludedRule(rule);
+    const excludeRules = await ExcludeRule.find();
+
+    await Promise.all(excludeRules.map(rule => applyExcludedRule(rule)));
+
+    // excludeRules.forEach(async (rule) => {
+    //   await applyExcludedRule(rule);
+    // });
     res.status(200).json({ message: "Successfully Excluded" });
   } catch (error) {
     res.status(400).json({ message: "Error Occred while applying exclusions" });

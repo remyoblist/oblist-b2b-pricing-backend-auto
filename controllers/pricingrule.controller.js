@@ -82,6 +82,27 @@ const getAll = async (req, res) => {
   }
 };
 
+// READ all pricing rules and apply All
+const applyAllPricingRules = async (req, res) => {
+  try {
+    const pricingRules = await PricingRule.find();
+     
+    // Separate the Vintage tag rule from others
+    const regularRules = pricingRules.filter(rule => !(rule.category === 'Tag' && rule.product_tag === 'Vintage'));
+    let rule_tagVintage = pricingRules.find(rule => rule.category === 'Tag' && rule.product_tag === 'Vintage');
+    
+    // Process all regular rules in parallel and wait for completion
+    await Promise.all(regularRules.map(rule => updateOnePricingRule(rule._id, rule)));
+
+    if(rule_tagVintage) // if there's tag-vintage rule, apply it last
+      await updateOnePricingRule(rule_tagVintage._id, rule_tagVintage);
+
+    return res.status(200).json({ message: "All pricing rules applied" });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 // READ a single pricing rule by ID
 const getOne = async (req, res) => {
   try {
@@ -96,73 +117,79 @@ const getOne = async (req, res) => {
   }
 };
 
-// UPDATE a pricing rule by ID
-const updateOne = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      title,
+
+const updateOnePricingRule = async (id, rule) => {
+  const {
+    title,
+    vendor,
+    pricing_rule,
+    category,
+    product,
+    collection,
+    currency,
+    product_tag,
+  } = rule;
+  const originPricingRule = await PricingRule.findById(id);
+
+  const updatedPricingRule = await PricingRule.findByIdAndUpdate(
+    id,
+    {
       vendor,
       pricing_rule,
       category,
       product,
       collection,
-      currency,
       product_tag,
-    } = req.body;
+    },
+    { new: true }
+  );
 
-    const originPricingRule = await PricingRule.findById(id);
+  if (!updatedPricingRule) {
+    return res.status(404).json({ message: "PricingRule not found" });
+  }
 
-    const updatedPricingRule = await PricingRule.findByIdAndUpdate(
-      id,
-      {
-        vendor,
-        pricing_rule,
-        category,
-        product,
-        collection,
-        product_tag,
-      },
-      { new: true }
-    );
+  const origin_variants = await GetVariants({
+    productType: originPricingRule.product,
+    category: originPricingRule.category,
+    collectionName: originPricingRule.collection,
+    Vendor: originPricingRule.vendor,
+    tag: product_tag,
+  });
+  const origin_calculatePrices = GetCalculatePrices4PriceList(
+    origin_variants,
+    pricing_rule.type,
+    pricing_rule.percentage
+  );
+  await updatePriceListPrices(
+    TESTER_PRICE_LIST_ID,
+    origin_calculatePrices,
+    true
+  );
 
-    if (!updatedPricingRule) {
+  const variants = await GetVariants({
+    productType: product,
+    category,
+    collectionName: collection,
+    Vendor: vendor,
+    tag: product_tag,
+  });
+  const calculatePrices = GetCalculatePrices4PriceList(
+    variants,
+    pricing_rule.type,
+    pricing_rule.percentage
+  );
+  await updatePriceListPrices(TESTER_PRICE_LIST_ID, calculatePrices);
+};
+// UPDATE a pricing rule by ID
+const updateOne = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updateRuleResult = await updateOnePricingRule(id, req.body);
+    if (!updateRuleResult) {
       return res.status(404).json({ message: "PricingRule not found" });
     }
-
-    const origin_variants = await GetVariants({
-      productType: originPricingRule.product,
-      category: originPricingRule.category,
-      collectionName: originPricingRule.collection,
-      Vendor: originPricingRule.vendor,
-      tag: product_tag,
-    });
-    const origin_calculatePrices = GetCalculatePrices4PriceList(
-      origin_variants,
-      pricing_rule.type,
-      pricing_rule.percentage
-    );
-    await updatePriceListPrices(
-      TESTER_PRICE_LIST_ID,
-      origin_calculatePrices,
-      true
-    );
-
-    const variants = await GetVariants({
-      productType: product,
-      category,
-      collectionName: collection,
-      Vendor: vendor,
-      tag: product_tag,
-    });
-    const calculatePrices = GetCalculatePrices4PriceList(
-      variants,
-      pricing_rule.type,
-      pricing_rule.percentage
-    );
-    await updatePriceListPrices(TESTER_PRICE_LIST_ID, calculatePrices);
-
-    res.status(200).json(updatedPricingRule);
+    res.status(200).json(updateRuleResult);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -204,4 +231,4 @@ const deleteOne = async (req, res) => {
   }
 };
 
-module.exports = { create, getAll, getOne, updateOne, deleteOne };
+module.exports = { create, getAll, getOne, updateOne, deleteOne, applyAllPricingRules };
