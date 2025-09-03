@@ -151,7 +151,7 @@ const fetchAllProductsByTag = async (tag) => {
       };
 
       if (res.products.edges.length > 0) {
-        res.products.edges.forEach((edge) => {
+        res.products.edges?.forEach((edge) => {
           // Ensure the product has the exact tag
           if (edge.node.tags.includes(tag)) {
             const variants = edge.node.variants.edges.map((edge) => {
@@ -279,7 +279,7 @@ const GetVariants = async ({
   //     return !tag_list.some((pre_tag) => product.tags.includes(pre_tag));
   //   });
   // }
-  products.forEach((product) => {
+  products?.forEach((product) => {
     const product_variants = product?.variants;
     for (let i = 0; i < product_variants.length; i++) {
       variants.push(product_variants[i]);
