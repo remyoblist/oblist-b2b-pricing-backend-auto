@@ -2,7 +2,7 @@ name: Daily Automation Script
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+    - cron: '0 */3 * * *'  # Runs every 3 hours (at 0:00, 3:00, 6:00, 9:00, 12:00, 15:00, 18:00, 21:00 UTC)
   workflow_dispatch:  # Allows manual trigger if needed
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install Dependencies
         run: npm install
