@@ -1,4 +1,4 @@
-name: 3hrs Automation Script on IN/EXclude Rules
+name: 1hr Automation Script on IN/EXclude Rules
 
 on:
   schedule:
