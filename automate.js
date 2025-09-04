@@ -69,10 +69,10 @@ const apply_all_pricing_rule = async () => {
   return response.data;
 }
 
-(async () => {
-    await authenticate();
-    await apply_all_pricing_rule();
-    await apply_all_exclude_rule();
-    
-    return;
-})();
+module.exports = {
+  apply_all_exclude_rule,
+  apply_all_pricing_rule,
+  authenticate,
+  update_pricing_rule,
+  get_all_pricing_rule,
+}
