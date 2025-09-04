@@ -8,6 +8,7 @@ const {
 } = require("./product.shopify.controller");
 const { TESTER_PRICE_LIST_ID } = require("../config/shopify");
 const { func_ApplyAllPricingRules } = require("./pricingrule.controller");
+const PricingRule = require("../models/pricingrule");
 
 // CREATE a new pricing rule
 const create = async (req, res) => {
@@ -80,11 +81,7 @@ const create_or_not_b2b_exclude = async (req, res) => {
       if (existingRule) {
         await ExcludeRule.deleteOne({ _id: existingRule._id });
 
-        // _______ APPLY All IN/Exlucude Rules _______
-        await func_ApplyAllPricingRules();
-        const excludeRules = await ExcludeRule.find();
-        await Promise.all(excludeRules.map(rule => applyExcludedRule(rule)));
-        // ------- APPLY All IN/Exlucude Rules -------
+        await func_ApplyAllRules();
 
         return res.status(200).json({ msg: 'Removed from excluding rules list since the vendor accepts b2b' });
       } else {
@@ -220,4 +217,16 @@ const applyExcludedRule = async (ExcludeRule) => {
   );
 }
 
-module.exports = { create, getAll, getOne, updateOne, deleteOne, applyAllExcludedRules, create_or_not_b2b_exclude };
+const func_ApplyAllRules = async () => {
+  try {
+    // _______ APPLY All IN/Exlucude Rules _______
+    await func_ApplyAllPricingRules();
+    const excludeRules = await ExcludeRule.find();
+    await Promise.all(excludeRules.map(rule => applyExcludedRule(rule)));
+    // ------- APPLY All IN/Exlucude Rules -------
+  } catch ( e ) {
+    console.error("An error occurred while applying all rules:", e);
+  }
+}
+
+module.exports = { create, getAll, getOne, updateOne, deleteOne, applyAllExcludedRules, create_or_not_b2b_exclude, func_ApplyAllRules };
