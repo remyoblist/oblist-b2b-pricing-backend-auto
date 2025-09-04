@@ -83,19 +83,31 @@ const getAll = async (req, res) => {
 };
 
 // READ all pricing rules and apply All
+
+const func_ApplyAllPricingRules = async () => {
+  const pricingRules = await PricingRule.find();
+
+  // Separate the Vintage tag rule from others
+  const regularRules = pricingRules.filter(
+    (rule) => !(rule.category === "Tag" && rule.product_tag === "Vintage")
+  );
+  let rule_tagVintage = pricingRules.find(
+    (rule) => rule.category === "Tag" && rule.product_tag === "Vintage"
+  );
+
+  // Process all regular rules in parallel and wait for completion
+  await Promise.all(
+    regularRules.map((rule) => updateOnePricingRule(rule._id, rule))
+  );
+
+  if (rule_tagVintage)
+    // if there's tag-vintage rule, apply it last
+    await updateOnePricingRule(rule_tagVintage._id, rule_tagVintage);
+};
+
 const applyAllPricingRules = async (req, res) => {
   try {
-    const pricingRules = await PricingRule.find();
-     
-    // Separate the Vintage tag rule from others
-    const regularRules = pricingRules.filter(rule => !(rule.category === 'Tag' && rule.product_tag === 'Vintage'));
-    let rule_tagVintage = pricingRules.find(rule => rule.category === 'Tag' && rule.product_tag === 'Vintage');
-    
-    // Process all regular rules in parallel and wait for completion
-    await Promise.all(regularRules.map(rule => updateOnePricingRule(rule._id, rule)));
-
-    if(rule_tagVintage) // if there's tag-vintage rule, apply it last
-      await updateOnePricingRule(rule_tagVintage._id, rule_tagVintage);
+    await func_ApplyAllPricingRules();
 
     return res.status(200).json({ message: "All pricing rules applied" });
   } catch (error) {
@@ -116,7 +128,6 @@ const getOne = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
 
 const updateOnePricingRule = async (id, rule) => {
   const {
@@ -231,4 +242,12 @@ const deleteOne = async (req, res) => {
   }
 };
 
-module.exports = { create, getAll, getOne, updateOne, deleteOne, applyAllPricingRules };
+module.exports = {
+  create,
+  getAll,
+  getOne,
+  updateOne,
+  deleteOne,
+  applyAllPricingRules,
+  func_ApplyAllPricingRules,
+};

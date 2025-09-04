@@ -7,6 +7,7 @@ const {
   GetCalculatePrices4PriceList,
 } = require("./product.shopify.controller");
 const { TESTER_PRICE_LIST_ID } = require("../config/shopify");
+const { func_ApplyAllPricingRules } = require("./pricingrule.controller");
 
 // CREATE a new pricing rule
 const create = async (req, res) => {
@@ -78,6 +79,13 @@ const create_or_not_b2b_exclude = async (req, res) => {
       // If rule exists and vendor now accepts B2B, remove the rule
       if (existingRule) {
         await ExcludeRule.deleteOne({ _id: existingRule._id });
+
+        // _______ APPLY All IN/Exlucude Rules _______
+        await func_ApplyAllPricingRules();
+        const excludeRules = await ExcludeRule.find();
+        await Promise.all(excludeRules.map(rule => applyExcludedRule(rule)));
+        // ------- APPLY All IN/Exlucude Rules -------
+
         return res.status(200).json({ msg: 'Removed from excluding rules list since the vendor accepts b2b' });
       } else {
         // No rule to remove, just respond
@@ -187,9 +195,6 @@ const applyAllExcludedRules = async (req, res) => {
 
     await Promise.all(excludeRules.map(rule => applyExcludedRule(rule)));
 
-    // excludeRules.forEach(async (rule) => {
-    //   await applyExcludedRule(rule);
-    // });
     res.status(200).json({ message: "Successfully Excluded" });
   } catch (error) {
     res.status(400).json({ message: "Error Occred while applying exclusions" });
