@@ -389,4 +389,5 @@ module.exports = {
   GetVariants,
   GetCalculatePrices4PriceList,
   getAllProductTags,
+  fetchCollection
 };

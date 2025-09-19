@@ -1,5 +1,7 @@
 const axios = require('axios');
 const env = require('dotenv');
+const { fetchCollection } = require('./controllers/product.shopify.controller');
+const { shopify } = require('./config/shopify');
 
 env.config();
 
@@ -69,6 +71,167 @@ const apply_all_pricing_rule = async () => {
   return response.data;
 }
 
+const getCollectionProducts = async (collectionName, limit = 0) => {
+  const collectionId = await fetchCollection(collectionName);
+  let hasNextPage = true;
+  let cursor = null;
+  let allProducts = [];
+  let descriptionHtml = null;
+
+  while (hasNextPage) {
+    const query = `query ($cursor: String) {
+      collection(id: "gid://shopify/Collection/${collectionId}") {
+        title
+        descriptionHtml
+        products(first: 250, after: $cursor) {
+          pageInfo {
+            hasNextPage
+          }
+          edges {
+            cursor
+            node {
+              id
+              title
+            }
+          }
+        }
+      }
+    }`;
+
+    const variables = cursor ? { cursor } : {};
+    const response = await shopify.graphql(query, variables);
+
+    // Set collection title only once
+    if (descriptionHtml === null && response.descriptionHtml) {
+      descriptionHtml = response.collection.descriptionHtml;
+    }
+
+    const edges = response.collection?.products?.edges || [];
+    edges.forEach(edge => {
+      allProducts.push({
+        id: edge.node.id,
+        title: edge.node.title,
+      });
+    });
+
+    if (limit > 0 && allProducts.length >= limit) {
+      allProducts = allProducts.slice(0, limit);
+      break;
+    }
+    hasNextPage = response.collection?.products?.pageInfo?.hasNextPage;
+    if (hasNextPage && edges.length > 0) {
+      cursor = edges[edges.length - 1].cursor;
+    } else {
+      hasNextPage = false;
+    }
+  }
+
+  return {
+    description: descriptionHtml,
+    products: allProducts,
+  };
+};
+
+const removeAllProductsfromCollection = async (collectionName) => {
+  const collectionId = await fetchCollection(collectionName);
+  console.log("Collection ID:", collectionId);
+  const mutation = `
+    mutation collectionRemoveProducts($id: ID!, $productIds: [ID!]!) {
+      collectionRemoveProducts(id: $id, productIds: $productIds) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  // Fetch all products in the collection
+  const { products } = await getCollectionProducts("New In");
+  const productIds = products.map(p => p.id);
+
+  // Shopify allows a maximum of 250 product IDs per request
+  const chunkSize = 250;
+
+  try {
+    for (let i = 0; i < productIds.length; i += chunkSize) {
+      const chunk = productIds.slice(i, i + chunkSize);
+      const variables = {
+        id: `gid://shopify/Collection/${collectionId}`,
+        productIds: chunk
+      };
+
+      const response = await shopify.graphql(mutation, variables);
+      if (response.collectionRemoveProducts.userErrors && response.collectionRemoveProducts.userErrors.length > 0) {
+        throw new Error(
+          response.collectionRemoveProducts.userErrors.map(e => e.message).join("; ")
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Error removing products from collection:", error);
+    throw error;
+  }
+};
+
+const addProductsToCollection = async (collectionId, productIds) => {
+  const mutation = `
+    mutation collectionAddProducts($id: ID!, $productIds: [ID!]!) {
+      collectionAddProducts(id: $id, productIds: $productIds) {
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  // Shopify allows a maximum of 250 product IDs per request
+  const chunkSize = 250;
+  for (let i = 0; i < productIds.length; i += chunkSize) {
+    const chunk = productIds.slice(i, i + chunkSize);
+    const variables = {
+      id: collectionId,
+      productIds: chunk
+    };
+
+    try {
+      const response = await shopify.graphql(mutation, variables);
+      if (response.collectionAddProducts.userErrors && response.collectionAddProducts.userErrors.length > 0) {
+        throw new Error(
+          response.collectionAddProducts.userErrors.map(e => e.message).join("; ")
+        );
+      }
+    } catch (error) {
+      console.error("Error adding products to collection:", error);
+      throw error;
+    }
+  }
+};
+
+(async () => {
+  const {products} = await getCollectionProducts("New Arrivals", 400);
+  products.forEach(product => {
+    console.log(product);
+  });
+
+  await removeAllProductsfromCollection("New In").then(() => {
+    console.log("All products removed from collection successfully.");
+  });
+
+  const collection_id = await fetchCollection("New In");
+
+  await new Promise(resolve => setTimeout(resolve, 20000));
+  console.log("Collection ID fetched:", collection_id);
+
+  if (collection_id) {
+    await addProductsToCollection(`gid://shopify/Collection/${collection_id}`, products.map(p => p.id)).then(() => {
+      console.log("Products added to collection successfully.");
+    }).catch(error => {
+      console.error("Error:", error);
+    });
+  }
+})();
 
 (async () => {
     await authenticate();
