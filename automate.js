@@ -147,7 +147,7 @@ const removeAllProductsfromCollection = async (collectionName) => {
   `;
 
   // Fetch all products in the collection
-  const { products } = await getCollectionProducts("New In");
+  const { products } = await getCollectionProducts("New Arrivals");
   const productIds = products.map(p => p.id);
 
   // Shopify allows a maximum of 250 product IDs per request
@@ -210,16 +210,16 @@ const addProductsToCollection = async (collectionId, productIds) => {
 };
 
 (async () => {
-  const {products} = await getCollectionProducts("New Arrivals", 400);
+  const {products} = await getCollectionProducts("New Arrivals Temp", 400);
   products.forEach(product => {
     console.log(product);
   });
 
-  await removeAllProductsfromCollection("New In").then(() => {
+  await removeAllProductsfromCollection("New Arrivals").then(() => {
     console.log("All products removed from collection successfully.");
   });
 
-  const collection_id = await fetchCollection("New In");
+  const collection_id = await fetchCollection("New Arrivals");
 
   await new Promise(resolve => setTimeout(resolve, 20000));
   console.log("Collection ID fetched:", collection_id);
@@ -233,13 +233,13 @@ const addProductsToCollection = async (collectionId, productIds) => {
   }
 })();
 
-(async () => {
-    await authenticate();
-    await apply_all_pricing_rule();
-    await apply_all_exclude_rule();
+// (async () => {
+//     await authenticate();
+//     await apply_all_pricing_rule();
+//     await apply_all_exclude_rule();
     
-    return;
-})();
+//     return;
+// })();
 
 // module.exports = {
 //   apply_all_exclude_rule,
