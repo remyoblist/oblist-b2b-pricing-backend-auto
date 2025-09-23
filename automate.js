@@ -233,13 +233,13 @@ const addProductsToCollection = async (collectionId, productIds) => {
   }
 })();
 
-// (async () => {
-//     await authenticate();
-//     await apply_all_pricing_rule();
-//     await apply_all_exclude_rule();
+(async () => {
+    await authenticate();
+    await apply_all_pricing_rule();
+    await apply_all_exclude_rule();
     
-//     return;
-// })();
+    return;
+})();
 
 // module.exports = {
 //   apply_all_exclude_rule,
