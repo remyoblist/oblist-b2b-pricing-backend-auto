@@ -8,14 +8,32 @@ env.config();
 let authToken = '';
 const BASIC_URL = 'https://oblist-b2b-pricing-backend.onrender.com/api'
 
-const authenticate = async () => {
+const authenticate = async (retries = 4) => {
     const email = process.env.EMAIL;
     const password = process.env.PASSWORD;
-    const response = await axios.post(`${BASIC_URL}/login`, { email, password });
-    const { token } = response.data;
-
-    // Store token
-    authToken = token;
+    
+    for (let i = 0; i < retries; i++) {
+        try {
+            console.log(`Authentication attempt ${i + 1}/${retries}...`);
+            const response = await axios.post(`${BASIC_URL}/login`, { email, password });
+            const { token } = response.data;
+            
+            // Store token
+            authToken = token;
+            console.log('Authentication successful');
+            return;
+        } catch (error) {
+            console.log(`Authentication attempt ${i + 1} failed:`, error.message);
+            
+            if (i === retries - 1) {
+                console.error('All authentication attempts failed');
+                throw error;
+            }
+            
+            console.log(`Waiting 5 seconds before retry...`);
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+    }
 }
 const update_pricing_rule = async (
     id,
