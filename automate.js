@@ -69,24 +69,58 @@ const get_all_pricing_rule = async () => {
 }
 
 
-const apply_all_exclude_rule = async () => {
+const apply_all_exclude_rule = async (retries = 4) => {
   const url = (`${BASIC_URL}/exclude_rules`);
-  const response = await axios.get(url, {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
-  return response.data;
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Applying exclude rules attempt ${i + 1}/${retries}...`);
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      console.log('Exclude rules applied successfully');
+      return response.data;
+    } catch (error) {
+      console.log(`Exclude rules attempt ${i + 1} failed:`, error.message);
+      
+      if (i === retries - 1) {
+        console.error('All exclude rules attempts failed');
+        throw error;
+      }
+      
+      console.log(`Waiting 5 seconds before retry...`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
 }
 
-const apply_all_pricing_rule = async () => {
+const apply_all_pricing_rule = async (retries = 4) => {
   const url = (`${BASIC_URL}/apply_p_rules`);
-  const response = await axios.get(url, {
-    headers: {
-      Authorization: `Bearer ${authToken}`,
-    },
-  });
-  return response.data;
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Applying pricing rules attempt ${i + 1}/${retries}...`);
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      console.log('Pricing rules applied successfully');
+      return response.data;
+    } catch (error) {
+      console.log(`Pricing rules attempt ${i + 1} failed:`, error.message);
+      
+      if (i === retries - 1) {
+        console.error('All pricing rules attempts failed');
+        throw error;
+      }
+      
+      console.log(`Waiting 5 seconds before retry...`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
 }
 
 const getCollectionProducts = async (collectionName, limit = 0) => {
