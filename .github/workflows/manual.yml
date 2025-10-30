@@ -2,7 +2,7 @@ name: 1hr Automation Script on IN/EXclude Rules
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Runs every 3 hours (at 0:00, 3:00, 6:00, 9:00, 12:00, 15:00, 18:00, 21:00 UTC)
+    - cron: '*/20 * * * *'  # Runs every 20 minutes
   workflow_dispatch:  # Allows manual trigger if needed
 
 jobs:
