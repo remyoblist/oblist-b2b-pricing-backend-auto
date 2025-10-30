@@ -2,8 +2,8 @@ name: 1hr Automation Script on IN/EXclude Rules
 
 on:
   schedule:
-    - cron: '*/20 * * * *'  # Runs every 20 minutes
-  workflow_dispatch:  # Allows manual trigger if needed
+    - cron: '*/20 * * * *'  # Every 20 minutes
+  workflow_dispatch:  # Manual trigger
 
 jobs:
   run-script:
