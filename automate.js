@@ -263,10 +263,6 @@ const addProductsToCollection = async (collectionId, productIds) => {
 
 (async () => {
   const {products} = await getCollectionProducts("New Arrivals Temp", 400);
-  products.forEach(product => {
-    console.log(product);
-  });
-
   await removeAllProductsfromCollection("New Arrivals").then(() => {
     console.log("All products removed from collection successfully.");
   });
